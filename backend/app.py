@@ -10,3 +10,30 @@ def hello():
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
+
+class Email:
+    def __init__(self, sender, subject, body, urlFlag):
+        self.sender = sender
+        self.subject = subject
+        self.body = body
+        self.urlFlag = urlFlag
+
+    def Edit_Distance_Check(self):
+        # put logic remove pass
+        pass
+
+    def WhiteList_Check(self):
+        # put logic remove pass
+        pass
+
+    def  Keyword_Detection(self):
+        # put logic remove pass
+        pass
+
+    def Sus_Url_Detection(self):
+        # put logic remove pass
+        pass
+
+    def Final_Risk_Score(self):
+        # put logic remove pass
+        pass
