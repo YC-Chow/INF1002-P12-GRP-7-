@@ -8,7 +8,7 @@ app = Flask(__name__)
 CORS(app)  # allow React to call Flask
 DATASET = "backend\\CEAS_08.csv"
 
-@app.route("/api/hello")
+@app.route("/")
 def hello():
     emailList = DatasetExtraction(5)
     return jsonify(message="Hello from Flask backend!")
