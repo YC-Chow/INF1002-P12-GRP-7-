@@ -15,9 +15,15 @@ def hello():
         print(email.sender)
     return jsonify(message="Hello from Flask backend!")
 
-# @app.route("/emails")
-# def get_emails():
-#     pass
+@app.route("/emails")
+def get_emails():
+    emailList = DatasetExtraction(10)
+    Final_Risk_check(emailList)
+    email_dicts = [email.to_dict() for email in emailList]
+    print(email_dicts)
+    return jsonify(email_dicts)
+
+
 class Email:
     def __init__(self, sender, subject, body):
         self.sender = sender
@@ -57,17 +63,27 @@ class Email:
                         self.riskScore += 1
             else:
                 print("No URL found")
-# def Final_Risk_check(email):
-#     email.Edit_Distance_Check()
-#     email.WhiteList_Check()
-#     email.Keyword_Detection()
-#     email.Sus_Url_Detection()
+    
+    def to_dict(self):
+        return {
+            "sender": self.sender,
+            "subject": self.subject,
+            "body": self.body,
+            "riskScore": self.riskScore
+        }
+                
+def Final_Risk_check(email_list):
+    for email in email_list:
+        email.Edit_Distance_Check()
+        email.WhiteList_Check()
+        email.Keyword_Detection()
+        email.Sus_Url_Detection()
 
 def DatasetExtraction(count):
     df = pd.read_csv(DATASET)
     # There are 71487 rows in the dataset
     # extracting x number of random rows from the dataset
-    random_numbers = [random.randint(1, 40000) for _ in range(count)]
+    random_numbers = [random.randint(1, 10000) for _ in range(count)]
     emailList = []
 
     i = 0
@@ -77,7 +93,7 @@ def DatasetExtraction(count):
             emailList.append(Email(row['sender'], row['subject'], row['body']))
         else:
         #if its not valid email, extract another random row
-            random_numbers.append(random.randint(max(random_numbers), 71486))
+            random_numbers.append(random.randint(max(random_numbers), 10000))
         i += 1
         
     return emailList
