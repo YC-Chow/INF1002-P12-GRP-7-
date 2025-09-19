@@ -43,6 +43,13 @@ class Email:
             match = re.search(r"(?P<url>https?://[^\s]+)", self.body)
             if match:
                 print("URL found: ", match.group("url"))
+                # for email in match.group("url"):
+                #     if "bit.ly" in email or "tinyurl.com" in email or "ow.ly" in email:
+                #         self.riskScore += 1
+                #     elif ".exe" in email or ".zip" in email or ".rar" in email:
+                #         self.riskScore += 1
+                #     elif "http://" in email:
+                #         self.riskScore += 1
             else:
                 print("No URL found")
         # put logic remove pass
@@ -54,13 +61,19 @@ class Email:
 
 def DatasetExtraction(count):
     df = pd.read_csv(DATASET)
-    random_numbers = [random.randint(0, 5000) for _ in range(count)]
+    # There are 71487 rows in the dataset
+    # extracting x number of random rows from the dataset
+    random_numbers = [random.randint(0, 71486) for _ in range(count)]
     emailList = []
 
     for num in random_numbers:
         row = df.iloc[num]
-        emailList.append(Email(row['sender'], row['subject'], row['body']))
-    
+        # checks whether the data extracted from dataset is valid email or not
+        if re.Match(r"[^@]+@[^@]+\.[^@]+", row['sender']):
+            emailList.append(Email(row['sender'], row['subject'], row['body']))
+        else:
+        #if its not valid email, extract another random row
+            random_numbers.append(random.randint(max(random_numbers), 71486))
     for email in emailList:
         print(email.sender)
     return emailList
