@@ -11,8 +11,6 @@ DATASET = "backend\\CEAS_08.csv"
 @app.route("/")
 def hello():
     emailList = DatasetExtraction(5)
-    for email in emailList:
-        print(email.sender)
     return jsonify(message="Hello from Flask backend!")
 
 @app.route("/emails")
@@ -22,6 +20,11 @@ def get_emails():
     email_dicts = [email.to_dict() for email in emailList]
     print(email_dicts)
     return jsonify(email_dicts)
+
+SUSPICIOUS_KEYWORDS = [
+    "urgent", "verify", "account", "login", "password", "click", "confirm",
+    "update", "security", "alert", "billing", "suspended", "unusual activity"
+]
 
 
 class Email:
@@ -41,7 +44,43 @@ class Email:
 
     def  Keyword_Detection(self):
         # put logic remove pass
-        pass
+        found_keywords = []
+
+        # Check subject
+        subject_lower = self.subject.lower() if self.subject else ""
+        for keyword in SUSPICIOUS_KEYWORDS:
+            idx = subject_lower.find(keyword)
+            if idx != -1:
+                found_keywords.append((keyword, "subject", idx))
+            
+            # Check body
+        body_lower = self.body.lower() if self.body else ""
+        for keyword in SUSPICIOUS_KEYWORDS:
+            idx = body_lower.find(keyword)
+            if idx != -1:
+                found_keywords.append((keyword, "body", idx))
+        print("Found Keywords: ", found_keywords)
+        return found_keywords
+    
+    def Keyword_Position_Scoring(self):
+        """
+        Assigns risk score based on keyword positions.
+        - +3 if keyword in subject
+        - +2 if keyword in first 100 chars of body
+        - +1 if keyword elsewhere in body
+        """
+        found_keywords = self.Keyword_Detection()
+        for keyword, location, position in found_keywords:
+            if location == "subject":
+                self.riskScore += 3
+            elif location == "body":
+                if position < 100:
+                    self.riskScore += 2
+                else:
+                    self.riskScore += 1
+        print("Current Risk Score: ", self.riskScore)
+        return self.riskScore
+        
 
     def Sus_Url_Detection(self):
         if self.body == None or self.body == "":
@@ -77,6 +116,7 @@ def Final_Risk_check(email_list):
         email.Edit_Distance_Check()
         email.WhiteList_Check()
         email.Keyword_Detection()
+        email.Keyword_Position_Scoring()
         email.Sus_Url_Detection()
 
 def DatasetExtraction(count):
