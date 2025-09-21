@@ -40,6 +40,11 @@ class Email:
 
     def WhiteList_Check(self):
         # put logic remove pass
+        df = pd.read_csv("backend\\whitelist.csv")
+        if self.sender.lower() in df['sender'].str.lower().values:
+            self.riskScore -= 0 # no change in risk score if in whitelist
+        else:
+            self.riskScore += 1 # increase risk score if not in whitelist
         pass
 
     def  Keyword_Detection(self):
