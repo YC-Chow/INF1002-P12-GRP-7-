@@ -3,6 +3,7 @@ from flask_cors import CORS
 import re
 import pandas as pd
 import random
+import Levenshtein as lev
 
 app = Flask(__name__)
 CORS(app)  # allow React to call Flask
@@ -26,6 +27,17 @@ SUSPICIOUS_KEYWORDS = [
     "update", "security", "alert", "billing", "suspended", "unusual activity"
 ]
 
+legit_domains = [
+        "google.com", "gmail.com", "microsoft.com", "outlook.com",
+        "hotmail.com", "apple.com", "icloud.com", "amazon.com",
+        "facebook.com", "instagram.com", "twitter.com", "paypal.com",
+        "stripe.com", "visa.com", "mastercard.com", "bankofamerica.com",
+        "chase.com", "wellsfargo.com", "hsbc.com", "citibank.com",
+        "dbs.com", "ocbc.com", "uob.com.sg", "ebay.com",
+        "zoom.us", "linkedin.com", "netflix.com", "spotify.com",
+        "youtube.com"
+    ]
+
 
 class Email:
     def __init__(self, sender, subject, body):
@@ -35,9 +47,18 @@ class Email:
         self.riskScore = 0
 
     def Edit_Distance_Check(self):
-        # put logic remove pass
-        pass
+        
+        self.sender = self.sender.split('@')[-1].lower().strip()
 
+        for legit in legit_domains:
+            distance = lev.distance(self.sender,legit)
+            if distance == 0: 
+                return f"[SAFE] This email {self.sender} is an exact match with {legit}"
+            elif 1 <= distance <= 3:
+                return f"[SUSPICIOUS] {self.sender} looks similar to {legit}"
+
+        return f"[SAFE/SUS] {self.sender} is not similar to any known domain"
+    
     def WhiteList_Check(self):
         # put logic remove pass
         df = pd.read_csv("backend\\whitelist.csv")
@@ -145,6 +166,4 @@ def DatasetExtraction(count):
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
-
-
 
