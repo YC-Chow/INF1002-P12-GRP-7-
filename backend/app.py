@@ -22,6 +22,14 @@ def get_emails():
     print(email_dicts)
     return jsonify(email_dicts)
 
+@app.route("/distance")
+def distance():
+    emailList = DatasetExtraction(5)
+    for email in emailList:
+        email.Edit_Distance_Check()
+    email_dicts = [email.to_dict() for email in emailList]
+    return jsonify(email_dicts)
+
 SUSPICIOUS_KEYWORDS = [
     "urgent", "verify", "account", "login", "password", "click", "confirm",
     "update", "security", "alert", "billing", "suspended", "unusual activity"
