@@ -11,18 +11,20 @@ DATASET = "backend\\CEAS_08.csv"
 
 @app.route("/")
 def hello():
-    emailList = DatasetExtraction(5)
     return jsonify(message="Hello from Flask backend!")
 
-@app.route("/emails")
+@app.route("/emails" , methods=["GET"])
 def get_emails():
+    # extracts x random emails on route load
     emailList = DatasetExtraction(10)
     Final_Risk_check(emailList)
+    # convert list of Email objects to list of dicts
     email_dicts = [email.to_dict() for email in emailList]
     print(email_dicts)
     return jsonify(email_dicts)
 
 @app.route("/distance")
+# route for edit distance check testing
 def distance():
     emailList = DatasetExtraction(5)
     for email in emailList:
@@ -129,6 +131,7 @@ class Email:
                     # checks for typical url shorteners and file extensions
                     if "bit.ly" in email or "tinyurl.com" in email or "ow.ly" in email:
                         self.riskScore += 1
+                    # checks for file extensions in url
                     elif ".exe" in email or ".zip" in email or ".rar" in email:
                         self.riskScore += 1
                     #check whether url is using secure http
@@ -149,6 +152,9 @@ def Final_Risk_check(email_list):
     for email in email_list:
         email.Edit_Distance_Check()
         email.WhiteList_Check()
+        if email.riskScore >= 10:
+            #skips further checks as risk score is already max if any of the above checks fail
+            continue  
         email.Keyword_Detection()
         email.Keyword_Position_Scoring()
         email.Sus_Url_Detection()
@@ -164,6 +170,7 @@ def DatasetExtraction(count):
     while i < len(random_numbers):
         row = df.iloc[random_numbers[i]]
         if re.match(r"[^@]+@[^@]+\.[^@]+", row['sender']):
+            # create Email object and append to list if valid email
             emailList.append(Email(row['sender'], row['subject'], row['body']))
         else:
         #if its not valid email, extract another random row
