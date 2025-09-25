@@ -8,6 +8,7 @@ import Levenshtein as lev
 app = Flask(__name__)
 CORS(app)  # allow React to call Flask
 DATASET = "backend\\CEAS_08.csv"
+WHITELIST = "backend\\whitelist.csv"
 
 @app.route("/")
 def hello():
@@ -17,6 +18,8 @@ def hello():
 def get_emails():
     # extracts x random emails on route load
     emailList = DatasetExtraction(10)
+    for email in emailList:
+        email.WhiteList_Check()
     Final_Risk_check(emailList)
     # convert list of Email objects to list of dicts
     email_dicts = [email.to_dict() for email in emailList]
@@ -55,6 +58,7 @@ class Email:
         self.subject = subject
         self.body = body
         self.riskScore = 0
+        self.is_whitelisted = None
 
     def Edit_Distance_Check(self):
         
@@ -71,12 +75,18 @@ class Email:
     
     def WhiteList_Check(self):
         # put logic remove pass
-        df = pd.read_csv("backend\\whitelist.csv")
+        df = pd.read_csv(DATASET)   #testing with dataset for now as whitelist has utf-8 problems
         if self.sender.lower() in df['sender'].str.lower().values:
             self.riskScore -= 0 # no change in risk score if in whitelist
+            print(f"Sender in whitelist: {self.sender}")
+            self.is_whitelisted = True
+            return self.is_whitelisted
         else:
             self.riskScore += 1 # increase risk score if not in whitelist
-        pass
+            print(f"Sender not in whitelist: {self.sender}")
+            self.is_whitelisted = False
+            return self.is_whitelisted
+
 
     def  Keyword_Detection(self):
         # put logic remove pass
@@ -145,7 +155,8 @@ class Email:
             "sender": self.sender,
             "subject": self.subject,
             "body": self.body,
-            "riskScore": self.riskScore
+            "riskScore": self.riskScore,
+            "is_whitelisted": self.is_whitelisted
         }
                 
 def Final_Risk_check(email_list):
