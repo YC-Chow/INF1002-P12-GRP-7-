@@ -4,6 +4,8 @@ import re
 import pandas as pd
 import random
 import Levenshtein as lev
+import re
+
 
 app = Flask(__name__)
 CORS(app)  # allow React to call Flask
@@ -62,16 +64,34 @@ class Email:
 
     def Edit_Distance_Check(self):
         
-        self.sender = self.sender.split('@')[-1].lower().strip()
+        def extract_domain(sender):
+            # looks for a pattern inside <> using regex
+            match = re.search(r'<([^<>]+@[^<>]+)>', sender)
+            if match:
+                # extract the email if its inside the <>
+                email = match.group(1)
+            else:
+                email = sender
+            #split the @ and get the domain
+            domain = email.split('@')[-1].strip().lower()
+            return domain
+
+        domain = extract_domain(self.sender)
+        self.sender = domain
 
         for legit in legit_domains:
-            distance = lev.distance(self.sender,legit)
+            distance = lev.distance(domain,legit)
             if distance == 0: 
-                return f"[SAFE] This email {self.sender} is an exact match with {legit}"
+                self.riskScore += 1
+                print(f"[SAFE] Exact domain match: {domain} == {legit}. Risk +1")
+                return f"[SAFE] This email {domain} is an exact match with {legit}"
             elif 1 <= distance <= 3:
-                return f"[SUSPICIOUS] {self.sender} looks similar to {legit}"
-
-        return f"[SAFE/SUS] {self.sender} is not similar to any known domain"
+                self.riskScore += 10
+                print(f"[SUSPICIOUS] {domain} is similar to {legit}. Risk +10")
+                return f"[SUSPICIOUS] {domain} looks similar to {legit}"
+            
+        print(f"[UNKNOWN] {domain} is not similar to any known domain")
+        return f"[UNKNOWN] {domain} is not similar to any known domain"
     
     def WhiteList_Check(self):
         # put logic remove pass
