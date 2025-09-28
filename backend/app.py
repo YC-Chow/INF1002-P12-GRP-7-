@@ -90,7 +90,7 @@ class Email:
             return domain
 
         domain = extract_domain(self.sender)
-        self.sender = domain
+        
 
         for legit in legit_domains:
             distance = lev.distance(domain,legit)
