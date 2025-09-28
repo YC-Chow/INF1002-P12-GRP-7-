@@ -62,6 +62,19 @@ class Email:
         self.riskScore = 0
         self.is_whitelisted = None
 
+    def WhiteList_Check(self):
+        # put logic remove pass
+        df = pd.read_csv(WHITELIST)   # read whitelist csv
+        if self.sender.strip().lower() in df['sender'].str.strip().str.lower().values:  # check if sender is in whitelist (case insensitive, removes trailing spaces)
+            print(f"Sender in whitelist: {self.sender}")
+            self.is_whitelisted = True      #output can be found in /emails route
+            return self.is_whitelisted
+        else:
+            self.riskScore += 1 # increase risk score if not in whitelist
+            print(f"Sender not in whitelist: {self.sender}")
+            self.is_whitelisted = False     #output can be found in /emails route
+            return self.is_whitelisted
+
     def Edit_Distance_Check(self):
         
         def extract_domain(sender):
@@ -93,19 +106,7 @@ class Email:
         print(f"[UNKNOWN] {domain} is not similar to any known domain")
         return f"[UNKNOWN] {domain} is not similar to any known domain"
     
-    def WhiteList_Check(self):
-        # put logic remove pass
-        df = pd.read_csv(DATASET)   #testing with dataset for now as whitelist has utf-8 problems
-        if self.sender.lower() in df['sender'].str.lower().values:
-            self.riskScore -= 0 # no change in risk score if in whitelist
-            print(f"Sender in whitelist: {self.sender}")
-            self.is_whitelisted = True
-            return self.is_whitelisted
-        else:
-            self.riskScore += 1 # increase risk score if not in whitelist
-            print(f"Sender not in whitelist: {self.sender}")
-            self.is_whitelisted = False
-            return self.is_whitelisted
+    
 
 
     def  Keyword_Detection(self):
@@ -181,8 +182,8 @@ class Email:
                 
 def Final_Risk_check(email_list):
     for email in email_list:
-        email.Edit_Distance_Check()
         email.WhiteList_Check()
+        email.Edit_Distance_Check()
         if email.riskScore >= 10:
             #skips further checks as risk score is already max if any of the above checks fail
             continue  
