@@ -111,8 +111,8 @@ class Email:
         for legit in legit_domains:
             distance = lev.distance(domain,legit)
             if distance == 0: 
-                self.riskScore += 1
-                print(f"[SAFE] Exact domain match: {domain} == {legit}. Risk +1")
+                self.riskScore += 0
+                print(f"[SAFE] Exact domain match: {domain} == {legit}. Risk +0")
                 return f"[SAFE] This email {domain} is an exact match with {legit}"
             elif 1 <= distance <= 3:
                 self.riskScore += 10
@@ -126,7 +126,7 @@ class Email:
 
 
     def  Keyword_Detection(self):
-        # put logic remove pass
+        # Initializes an empty list to store matched keywords along with their location and position.
         found_keywords = []
 
         # Check subject
