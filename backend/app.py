@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify , request
 from flask_cors import CORS
 import re
 import pandas as pd
@@ -36,6 +36,22 @@ def distance():
         email.Edit_Distance_Check()
     email_dicts = [email.to_dict() for email in emailList]
     return jsonify(email_dicts)
+
+@app.route("/analyze", methods=["POST"])
+# route to analyze the email input from React web
+def analyze_email():
+    data = request.get_json()
+    sender = data.get("sender", "")
+    subject = data.get("subject", "")
+    body = data.get("body", "")
+
+    email = Email(sender, subject, body)
+    email.WhiteList_Check()
+    email.Edit_Distance_Check()
+    email.Keyword_Position_Scoring()
+    email.Sus_Url_Detection()
+
+    return jsonify(email.to_dict())
 
 SUSPICIOUS_KEYWORDS = [
     "urgent", "verify", "account", "login", "password", "click", "confirm",
