@@ -43,12 +43,12 @@ SUSPICIOUS_KEYWORDS = [
 ]
 
 legit_domains = [
-        "google.com", "gmail.com", "microsoft.com", "outlook.com",
+        "google.com", "gmail.com", "yahoo.com" ,"microsoft.com", "outlook.com",
         "hotmail.com", "apple.com", "icloud.com", "amazon.com",
         "facebook.com", "instagram.com", "twitter.com", "paypal.com",
-        "stripe.com", "visa.com", "mastercard.com", "bankofamerica.com",
+        "stripe.com","hotmail.com" ,"mastercard.com", "bankofamerica.com",
         "chase.com", "wellsfargo.com", "hsbc.com", "citibank.com",
-        "dbs.com", "ocbc.com", "uob.com.sg", "ebay.com",
+        "ocbc.com", "uob.com.sg", "ebay.com",
         "zoom.us", "linkedin.com", "netflix.com", "spotify.com",
         "youtube.com"
     ]
