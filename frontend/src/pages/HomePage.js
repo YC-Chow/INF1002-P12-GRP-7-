@@ -55,6 +55,15 @@ function HomePage() {
                 <strong>Whitelisted:</strong>{" "}
                 {email.is_whitelisted ? "✅ Yes" : "❌ No"}
               </p>
+
+              <p className="text-sm mt-2">
+                <strong>Keywords:</strong>{" "}
+                {email.keywords?.length > 0 ? (
+                  email.keywords.join(", ")
+                ) : (
+                  <span className="italic text-gray-500">No keywords found.</span>
+                )}
+              </p>
             </div>
           );
         })}

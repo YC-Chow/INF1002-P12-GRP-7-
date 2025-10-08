@@ -77,6 +77,7 @@ class Email:
         self.body = body
         self.riskScore = 0
         self.is_whitelisted = None
+        self.detected_keywords = []
 
     def WhiteList_Check(self):
         # put logic remove pass
@@ -143,6 +144,7 @@ class Email:
             if idx != -1:
                 found_keywords.append((keyword, "body", idx))
         print("Found Keywords: ", found_keywords)
+        self.detected_keywords = found_keywords
         return found_keywords
     
     def Keyword_Position_Scoring(self):
@@ -193,7 +195,8 @@ class Email:
             "subject": self.subject,
             "body": self.body,
             "riskScore": self.riskScore,
-            "is_whitelisted": self.is_whitelisted
+            "is_whitelisted": self.is_whitelisted,
+            "keywords": list(set([kw[0] for kw in self.detected_keywords]))
         }
                 
 def Final_Risk_check(email_list):
