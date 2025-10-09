@@ -127,19 +127,26 @@ class Email:
         # Initializes an empty list to store matched keywords along with their location and position.
         found_keywords = []
 
-        # Check subject
+        # Prepare text safely
         subject_lower = self.subject.lower() if self.subject else ""
-        for keyword in SUSPICIOUS_KEYWORDS:
-            idx = subject_lower.find(keyword)
-            if idx != -1:
-                found_keywords.append((keyword, "subject", idx))
-            
-            # Check body
         body_lower = self.body.lower() if self.body else ""
+
         for keyword in SUSPICIOUS_KEYWORDS:
-            idx = body_lower.find(keyword)
-            if idx != -1:
-                found_keywords.append((keyword, "body", idx))
+            # Regex pattern ensures keyword appears as a separate word
+            #\b means a word boundary (space, punctuation, or start/end of string).
+            # re.escape() ensures any special characters in the keyword are treated literally.
+            # So "click" matches "click here" but not "clicking".
+            pattern = r"\b" + re.escape(keyword) + r"\b"
+
+            # Subject search
+            for match in re.finditer(pattern, subject_lower):
+                # If a match is found, append the keyword, its location, and position to the list.
+                #re.finditer() finds all matches, not just the first one — so multiple occurrences per email are detected.
+                found_keywords.append((keyword, "subject", match.start()))
+
+            # Body search
+            for match in re.finditer(pattern, body_lower):
+                found_keywords.append((keyword, "body", match.start()))
         print("Found Keywords: ", found_keywords)
         self.detected_keywords = found_keywords
         return found_keywords
