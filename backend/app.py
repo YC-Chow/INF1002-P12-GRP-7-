@@ -69,6 +69,10 @@ legit_domains = [
         "youtube.com"
     ]
 
+def clean_text(text):
+    # Replace multiple whitespace (space, tab, newline) with a single space
+    return re.sub(r"\s+", " ", text).strip()
+
 
 class Email:
     def __init__(self, sender, subject, body):
@@ -120,22 +124,21 @@ class Email:
         print(f"[UNKNOWN] {domain} is not similar to any known domain")
         return f"[UNKNOWN] {domain} is not similar to any known domain"
     
-    
 
 
     def  Keyword_Detection(self):
         # Initializes an empty list to store matched keywords along with their location and position.
         found_keywords = []
 
-        # Prepare text safely
-        subject_lower = self.subject.lower() if self.subject else ""
-        body_lower = self.body.lower() if self.body else ""
+        # Clean subject and body first
+        subject_lower = clean_text(self.subject.lower()) if self.subject else ""
+        body_lower = clean_text(self.body.lower()) if self.body else ""
 
         for keyword in SUSPICIOUS_KEYWORDS:
             # Regex pattern ensures keyword appears as a separate word
             #\b means a word boundary (space, punctuation, or start/end of string).
             # re.escape() ensures any special characters in the keyword are treated literally.
-            # So "click" matches "click here" but not "clicking".
+            # Example: keyword "click" → pattern \bclick\b. Matches "click.", " click " but not "clicking".
             pattern = r"\b" + re.escape(keyword) + r"\b"
 
             # Subject search
