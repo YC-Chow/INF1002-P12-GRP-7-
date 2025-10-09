@@ -113,7 +113,7 @@ class Email:
                 print(f"[SAFE] Exact domain match: {domain} == {legit}. Risk +0")
                 return f"[SAFE] This email {domain} is an exact match with {legit}"
             elif 1 <= distance <= 3:
-                self.riskScore += 10
+                self.riskScore = 10
                 print(f"[SUSPICIOUS] {domain} is similar to {legit}. Risk +10")
                 return f"[SUSPICIOUS] {domain} looks similar to {legit}"
             
@@ -213,6 +213,8 @@ def Final_Risk_check(email_list):
         email.Keyword_Detection()
         email.Keyword_Position_Scoring()
         email.Sus_Url_Detection()
+
+        email.riskScore = min(email.riskScore, 10)
 
 def DatasetExtraction(count):
     df = pd.read_csv(DATASET)
