@@ -80,14 +80,13 @@ class Email:
         self.detected_keywords = []
 
     def WhiteList_Check(self):
-        # put logic remove pass
-        df = pd.read_csv(WHITELIST)   # read whitelist csv
-        if self.sender.strip().lower() in df['sender'].str.strip().str.lower().values:  # check if sender is in whitelist (case insensitive, removes trailing spaces)
+        df = pd.read_csv(WHITELIST)   # reads whitelist csv into pandas dataframe for efficient lookups
+        if self.sender.strip().lower() in df['sender'].str.strip().str.lower().values:  # compare self.sender with whitelist (convert to lowercase, removes trailing spaces)
             print(f"Sender in whitelist: {self.sender}")
             self.is_whitelisted = True      #output can be found in /emails route
             return self.is_whitelisted
         else:
-            self.riskScore += 1 # increase risk score if not in whitelist
+            self.riskScore = 10 # max risk score as sender not in whitelist
             print(f"Sender not in whitelist: {self.sender}")
             self.is_whitelisted = False     #output can be found in /emails route
             return self.is_whitelisted
