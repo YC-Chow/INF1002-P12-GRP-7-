@@ -8,25 +8,35 @@ function AnalyzePage() {
   });
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    fetch("http://localhost:5000/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setResult(data);
-        setLoading(false);
-      })
-      .catch((err) => console.error(err));
+    setErrorMsg("");
+    setResult(null);
+
+    try {
+      const res = await fetch("http://localhost:5000/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}`);
+      }
+      const data = await res.json();
+      setResult(data);
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("Something went wrong analyzing this email. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -68,21 +78,75 @@ function AnalyzePage() {
           rows="5"
         />
 
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          {loading ? "Analyzing..." : "Analyze Email"}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-60"
+            disabled={loading}
+          >
+            {loading ? "Analyzing..." : "Analyze Email"}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setFormData({ sender: "", subject: "", body: "" });
+              setResult(null);
+              setErrorMsg("");
+            }}
+            className="px-3 py-2 rounded border"
+          >
+            Reset
+          </button>
+        </div>
+
+        {errorMsg && (
+          <p className="text-red-600 mt-3">{errorMsg}</p>
+        )}
       </form>
 
+      {/* Full Analysis (mirrors HomePage full analysis) */}
       {result && (
-        <div className="max-w-lg mx-auto mt-6 bg-gray-200 p-4 rounded">
-          <h3 className="font-semibold mb-2">Result:</h3>
-          <p><strong>Sender:</strong> {result.sender}</p>
-          <p><strong>Subject:</strong> {result.subject}</p>
-          <p><strong>Risk Score:</strong> {result.riskScore}</p>
-          <p><strong>Whitelisted:</strong> {result.is_whitelisted ? "✅ Yes" : "❌ No"}</p>
+        <div className="max-w-3xl mx-auto mt-6 bg-white border rounded-lg shadow p-6">
+          <h3 className="text-xl font-semibold mb-4">Full Analysis</h3>
+
+          <div className="space-y-2">
+            <p><span className="font-semibold">Sender:</span> {result.sender}</p>
+            <p><span className="font-semibold">Subject:</span> {result.subject}</p>
+            <p><span className="font-semibold">Body:</span> {result.body || <em>(no body)</em>}</p>
+            <p><span className="font-semibold">Total Risk Score:</span> {result.riskScore}</p>
+            <p>
+              <span className="font-semibold">Whitelisted:</span>{" "}
+              {result.is_whitelisted ? "✅ Yes" : "❌ No"}
+            </p>
+          </div>
+
+          <div className="mt-5">
+            <h4 className="font-semibold mb-2">Risk Breakdown:</h4>
+            {result.risk_breakdown ? (
+              <ul className="list-disc pl-6">
+                {Object.entries(result.risk_breakdown).map(([k, v]) => (
+                  <li key={k}>
+                    {k}: {v}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No breakdown available.</p>
+            )}
+          </div>
+
+          <div className="mt-5">
+            <h4 className="font-semibold mb-2">Keywords Detected:</h4>
+            {Array.isArray(result.keywords) && result.keywords.length > 0 ? (
+              <ul className="list-disc pl-6">
+                {result.keywords.map((kw, i) => (
+                  <li key={`${kw}-${i}`}>{kw}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>No keywords detected.</p>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -72,7 +72,7 @@ legit_domains = [
         "hotmail.com", "apple.com", "icloud.com", "amazon.com",
         "facebook.com", "instagram.com", "twitter.com", "paypal.com",
         "stripe.com","hotmail.com" ,"mastercard.com", "bankofamerica.com",
-        "chase.com", "wellsfargo.com", "hsbc.com", "citibank.com",
+        "wellsfargo.com", "hsbc.com", "citibank.com",
         "ocbc.com", "uob.com.sg", "ebay.com",
         "zoom.us", "linkedin.com", "netflix.com", "spotify.com",
         "youtube.com"
@@ -91,6 +91,7 @@ class Email:
         self.riskScore = 0
         self.is_whitelisted = None
         self.detected_keywords = []
+        self.edit_distance_flag = False
 
     def WhiteList_Check(self):
         df = pd.read_csv(WHITELIST)   # reads whitelist csv into pandas dataframe for efficient lookups
@@ -117,22 +118,27 @@ class Email:
             return domain
 
         domain = extract_domain(self.sender)
-        
 
+         # Quick exact match or subdomain check -> SAFE
         for legit in legit_domains:
-            distance = lev.distance(domain,legit)
-            if distance == 0: 
-                self.riskScore += 0
-                print(f"[SAFE] Exact domain match: {domain} == {legit}. Risk +0")
-                return f"[SAFE] This email {domain} is an exact match with {legit}"
+            real = legit.strip().lower()
+            distance = lev.distance(domain, real)
+
+            # Exact or subdomain match
+            if domain == real or domain.endswith("." + real):
+                print(f"[SAFE] Exact/subdomain match: {domain} == {real}")
+                return f"[SAFE] {domain} is an exact/subdomain match with {real}"
+
+            # Suspicious (distance 1–3)
             elif 1 <= distance <= 3:
                 self.riskScore = 10
-                print(f"[SUSPICIOUS] {domain} is similar to {legit}. Risk +10")
-                return f"[SUSPICIOUS] {domain} looks similar to {legit}"
-            
+                self.edit_distance_flag = True
+                print(f"[SUSPICIOUS] {domain} is similar to {real} (distance={distance}). Risk set to 10")
+                return f"[SUSPICIOUS] {domain} looks similar to {real}"
+
+        # If no matches at all
         print(f"[UNKNOWN] {domain} is not similar to any known domain")
         return f"[UNKNOWN] {domain} is not similar to any known domain"
-    
 
 
     def  Keyword_Detection(self):
@@ -216,14 +222,28 @@ class Email:
                 print("No URL found")
     
     def to_dict(self):
+        # this is to show the breakdown on the FRONTEND side (inside risk_breakdown)
+        keyword_score = 0
+        for kw, location, pos in self.detected_keywords:
+            if location == "subject":
+                keyword_score += 3
+            elif location == "body":
+                keyword_score += 2 if pos < 100 else 1
+
         return {
             "sender": self.sender,
             "subject": self.subject,
             "body": self.body,
             "riskScore": self.riskScore,
             "is_whitelisted": self.is_whitelisted,
-            "keywords": list(set([kw[0] for kw in self.detected_keywords]))
+            "keywords": list(set([kw[0] for kw in self.detected_keywords])),
+            "risk_breakdown": { # Breaksdown the overall riskscore into sub-components. Make it easy to show the frontend exactly the email has that riskscore
+                "Whitelist": 10 if (self.is_whitelisted is False and not self.edit_distance_flag) else 0,
+                "Edit Distance": 10 if self.edit_distance_flag else 0,
+                "Keyword": keyword_score,
+                "URL": 1 if "http://" in (self.body or "") else 0,
         }
+    }
                 
 def Final_Risk_check(email_list):
     for email in email_list:

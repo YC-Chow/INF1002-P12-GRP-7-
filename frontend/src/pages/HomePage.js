@@ -1,75 +1,62 @@
 import React, { useEffect, useState } from "react";
 
-function HomePage() {
+export default function HomePage() {
   const [emails, setEmails] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedEmail, setSelectedEmail] = useState(null);
 
-  const fetchEmails = () => {
-    setLoading(true);
-    fetch("http://localhost:5000/emails")
-      .then((res) => res.json())
-      .then((data) => {
-        setEmails(data);
-        setLoading(false);
-      })
-      .catch((err) => console.error(err));
+  // Fetch random emails
+  const fetchEmails = async () => {
+    const response = await fetch("http://localhost:5000/emails");
+    const data = await response.json();
+    setEmails(data);
+    setSelectedEmail(null);
   };
 
   useEffect(() => {
     fetchEmails();
   }, []);
 
-  if (loading) return <p className="text-center mt-10">Loading emails...</p>;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <h2 className="text-2xl font-semibold text-center mb-4">
-        Random Email Risk Scores
-      </h2>
-      <button
-        onClick={fetchEmails}
-        className="bg-blue-500 text-white px-4 py-2 rounded mb-6"
-      >
-        🔄 Refresh Emails
-      </button>
+    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
+      <h2>Email Risk Analysis</h2>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {emails.map((email, index) => {
-          const risk = email.riskScore;
-          let color =
-            risk >= 10 ? "bg-red-200" : risk >= 5 ? "bg-yellow-200" : "bg-green-200";
+      {/* Refresh Emails */}
+      <button onClick={fetchEmails} style={{ padding: "10px 15px", marginBottom: "20px" }}>Refresh Emails</button>
 
-          return (
-            <div
-              key={index}
-              className={`rounded-xl shadow-md p-4 ${color}`}
-            >
-              <h2 className="font-semibold">{email.sender}</h2>
-              <p className="text-sm mt-1">
-                <strong>Subject:</strong> {email.subject || "(No subject)"}
-              </p>
-              <p className="text-sm mt-2">
-                <strong>Risk Score:</strong> {email.riskScore}
-              </p>
-              <p className="text-sm mt-1">
-                <strong>Whitelisted:</strong>{" "}
-                {email.is_whitelisted ? "✅ Yes" : "❌ No"}
-              </p>
+      {/* Email List */}
+      {!selectedEmail && emails.map((email, index) => (
+        <div key={index} style={{ border: "1px solid #ccc", padding: "10px", marginBottom: "10px" }}>
+          <p><strong>Sender:</strong> {email.sender}</p>
+          <p><strong>Subject:</strong> {email.subject}</p>
+          <p><strong>Risk Score:</strong> {email.riskScore}</p>
+          <button onClick={() => setSelectedEmail(email)} style={{ padding: "5px 10px" }}>View Full Analysis</button>
+        </div>
+      ))}
 
-              <p className="text-sm mt-2">
-                <strong>Keywords:</strong>{" "}
-                {email.keywords?.length > 0 ? (
-                  email.keywords.join(", ")
-                ) : (
-                  <span className="italic text-gray-500">No keywords found.</span>
-                )}
-              </p>
-            </div>
-          );
-        })}
-      </div>
+      {/* Full Analysis */}
+      {selectedEmail && (
+        <div style={{ border: "1px solid #888", padding: "15px", marginTop: "20px" }}>
+          <h3>Full Analysis</h3>
+          <p><strong>Sender:</strong> {selectedEmail.sender}</p>
+          <p><strong>Subject:</strong> {selectedEmail.subject}</p>
+          <p><strong>Body:</strong> {selectedEmail.body}</p>
+          <p><strong>Total Risk Score:</strong> {selectedEmail.riskScore}</p>
+          <h4>Risk Breakdown:</h4>
+          <ul>
+            {Object.entries(selectedEmail.risk_breakdown).map(([key, value]) => (
+              <li key={key}>{key}: {value}</li>
+            ))}
+          </ul>
+          <h4>Keywords Detected:</h4>
+          {selectedEmail.keywords.length > 0 ? (
+            <ul>
+              {selectedEmail.keywords.map((kw, i) => <li key={i}>{kw}</li>)}
+            </ul>
+          ) : <p>No keywords detected.</p>}
+          <button onClick={() => setSelectedEmail(null)} style={{ padding: "10px 15px" }}>Close Full Analysis</button>
+        </div>
+      )}
     </div>
   );
 }
-
-export default HomePage;
