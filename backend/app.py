@@ -37,6 +37,15 @@ def distance():
     email_dicts = [email.to_dict() for email in emailList]
     return jsonify(email_dicts)
 
+@app.route("/url", methods=["GET"])
+def url():
+    emailList = DatasetExtraction(5)
+    emailList.append(Email("", "Test Subject", "Please click http://192.168.0.1 to verify bit.ly/abc.zip"))
+    for email in emailList:
+        email.Sus_Url_Detection()
+    email_dicts = [email.to_dict() for email in emailList]
+    return jsonify(email_dicts)
+
 @app.route("/analyze", methods=["POST"])
 # route to analyze the email input from React web
 def analyze_email():
@@ -68,6 +77,10 @@ legit_domains = [
         "zoom.us", "linkedin.com", "netflix.com", "spotify.com",
         "youtube.com"
     ]
+
+def clean_text(text):
+    # Replace multiple whitespace (space, tab, newline) with a single space
+    return re.sub(r"\s+", " ", text).strip()
 
 
 class Email:
@@ -120,22 +133,21 @@ class Email:
         print(f"[UNKNOWN] {domain} is not similar to any known domain")
         return f"[UNKNOWN] {domain} is not similar to any known domain"
     
-    
 
 
     def  Keyword_Detection(self):
         # Initializes an empty list to store matched keywords along with their location and position.
         found_keywords = []
 
-        # Prepare text safely
-        subject_lower = self.subject.lower() if self.subject else ""
-        body_lower = self.body.lower() if self.body else ""
+        # Clean subject and body first
+        subject_lower = clean_text(self.subject.lower()) if self.subject else ""
+        body_lower = clean_text(self.body.lower()) if self.body else ""
 
         for keyword in SUSPICIOUS_KEYWORDS:
             # Regex pattern ensures keyword appears as a separate word
             #\b means a word boundary (space, punctuation, or start/end of string).
             # re.escape() ensures any special characters in the keyword are treated literally.
-            # So "click" matches "click here" but not "clicking".
+            # Example: keyword "click" → pattern \bclick\b. Matches "click.", " click " but not "clicking".
             pattern = r"\b" + re.escape(keyword) + r"\b"
 
             # Subject search
@@ -176,20 +188,30 @@ class Email:
             print("No body")
             self.riskScore += 1
         else:
+            # check for url shorteners
+            if "bit.ly" in self.body or "tinyurl.com" in self.body or "ow.ly" in self.body:
+                    print("URL Shortener found!")
+                    self.riskScore += 1
             #extract url from body
             match = re.search(r"(?P<url>https?://[^\s]+)", self.body)
             if match:
-                print("URL found: ", match.group("url"))
-                for email in match.group("url"):
-                    # checks for typical url shorteners and file extensions
-                    if "bit.ly" in email or "tinyurl.com" in email or "ow.ly" in email:
-                        self.riskScore += 1
-                    # checks for file extensions in url
-                    elif ".exe" in email or ".zip" in email or ".rar" in email:
-                        self.riskScore += 1
-                    #check whether url is using secure http
-                    elif "http://" in email:
-                        self.riskScore += 1
+                # regex to match ip address
+                ipRegx = r'(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)' \
+                            r'(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}'
+                urlString = match.group("url")
+                print("URL found: ", urlString)
+
+                # check for .exe, .zip, .rar, http, ip address in url
+                if ".exe" in urlString or ".zip" in urlString or ".rar" in urlString:
+                    print("Executable found!")
+                    self.riskScore += 1
+                if "http://" in urlString:
+                    print("HTTP found!")
+                    self.riskScore += 1
+                if re.search(ipRegx, urlString):
+                    print("IP Add found!")
+                    self.riskScore += 1
+                
             else:
                 print("No URL found")
     
