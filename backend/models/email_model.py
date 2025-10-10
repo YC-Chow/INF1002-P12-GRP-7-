@@ -27,8 +27,11 @@ class Email:
 
     def Edit_Distance_Check(self):
         def extract_domain(sender):
+            # looks for a pattern inside the <> regex
             match = re.search(r'<([^<>]+@[^<>]+)>', sender)
+            #
             email = match.group(1) if match else sender
+            # split the @ and get the domain
             return email.split('@')[-1].strip().lower()
 
         domain = extract_domain(self.sender)
@@ -36,14 +39,20 @@ class Email:
         for legit in legit_domains:
             real = legit.strip().lower()
             distance = lev.distance(domain, real)
-
+            
+            # Exact or subdomain match
             if domain == real or domain.endswith("." + real):
+                print(f"[SAFE] Exact domain match : {domain} == {real}")
                 return f"[SAFE] {domain} == {real}"
+            
+            # Suspicious (distance 1-3)
             elif 1 <= distance <= 3:
                 self.riskScore = 10
                 self.edit_distance_flag = True
+                print(f"[SUSPICIOUS] {domain} is similar to {real} (distance = {distance}). Risk set to 10" )
                 return f"[SUSPICIOUS] {domain} looks similar to {real}"
 
+        print(f"[UNKNOWN] {domain} not similar to known domains")
         return f"[UNKNOWN] {domain} not similar to known domains"
 
     def Keyword_Detection(self):
