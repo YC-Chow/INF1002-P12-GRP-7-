@@ -1,7 +1,7 @@
 import re
 import pandas as pd
 import Levenshtein as lev
-from utils.text_utils import clean_text, SUSPICIOUS_KEYWORDS
+from utils.text_utils import clean_text, SUSPICIOUS_KEYWORDS, SHORTENERS, EXTENSIONS
 from config import WHITELIST, legit_domains
 
 
@@ -113,21 +113,27 @@ class Email:
 
     def Sus_Url_Detection(self):
         if self.body == None or self.body == "":
-            self.riskScore += 5
+            #skips URL checks if body is empty
             return
 
         # Check for known URL shorteners
-        if any(x in self.body for x in ["bit.ly", "tinyurl.com", "ow.ly"]):
+        if any(x in self.body for x in SHORTENERS):
             self.riskScore += 1
 
-        # Regex to find URLs
-        match = re.search(r"(?P<url>https?://[^\s]+)", self.body)
-        if match:
-            url = match.group("url")
-            ip_regex = r'(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}'
+        # Regex to find all URLs
+        urls = re.findall(r"(?P<url>https?://[^\s]+)", self.body)
+
+        ip_regex = r'(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}'
+
+        if not urls:
+            print("No URLs found.")
+            #skip URL checks if no URLs present
+            return
+
+        for url in urls:
             
             # check for extensons in url
-            if any(ext in url for ext in [".exe", ".zip", ".rar"]):
+            if any(ext in url for ext in EXTENSIONS):
                 self.riskScore += 1
             # check whether using https or not
             if "http://" in url:
@@ -135,6 +141,7 @@ class Email:
             # check for IP address in URL
             if re.search(ip_regex, url):
                 self.riskScore += 1
+       
 
     def to_dict(self):
         keyword_score = 0
