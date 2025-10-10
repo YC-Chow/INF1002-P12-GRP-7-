@@ -14,6 +14,7 @@ class Email:
         self.is_whitelisted = None
         self.detected_keywords = []
         self.edit_distance_flag = False
+        self.urlRisk = 0
 
     def WhiteList_Check(self):
         df = pd.read_csv(WHITELIST)
@@ -119,32 +120,31 @@ class Email:
         # Check for known URL shorteners
         if any(x in self.body for x in SHORTENERS):
             self.riskScore += 1
-
+    
         # Regex to find all URLs
         urls = re.findall(r"(?P<url>https?://[^\s]+)", self.body)
-
         ip_regex = r'(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}'
-
         if not urls:
             print("No URLs found.")
             #skip URL checks if no URLs present
             return
-
+        
         for url in urls:
-            
             # check for extensons in url
             if any(ext in url for ext in EXTENSIONS):
                 self.riskScore += 1
+                self.urlRisk += 1
             # check whether using https or not
             if "http://" in url:
                 self.riskScore += 1
+                self.urlRisk += 1
             # check for IP address in URL
             if re.search(ip_regex, url):
                 self.riskScore += 1
+                self.urlRisk += 1
        
 
     def to_dict(self):
-        # to show on the FRONTEND side
         keyword_score = 0
         for kw, loc, pos in self.detected_keywords:
             keyword_score += 3 if loc == "subject" else (2 if pos < 100 else 1)
@@ -156,11 +156,10 @@ class Email:
             "riskScore": self.riskScore,
             "is_whitelisted": self.is_whitelisted,
             "keywords": list(set([kw for kw, _, _ in self.detected_keywords])),
-
             "risk_breakdown": {
                 "Whitelist": 10 if (self.is_whitelisted is False and not self.edit_distance_flag) else 0,
                 "Edit Distance": 10 if self.edit_distance_flag else 0,
                 "Keyword": keyword_score,
-                "URL": 1 if "http://" in (self.body or "") else 0,
+                "URL": self.urlRisk,
             },
         }
