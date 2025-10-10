@@ -38,8 +38,10 @@ def analyze_email():
     email.WhiteList_Check()
     email.Edit_Distance_Check()
 
+    # extracts the keywords so the frontend can display it
     email.Keyword_Detection()
 
+    # Will not exceed 10 riskscore
     if email.riskScore <10:
         email.Keyword_Position_Scoring()
         email.Sus_Url_Detection()
