@@ -75,17 +75,23 @@ class Email:
             self.riskScore += 5
             return
 
+        # Check for known URL shorteners
         if any(x in self.body for x in ["bit.ly", "tinyurl.com", "ow.ly"]):
             self.riskScore += 1
 
+        # Regex to find URLs
         match = re.search(r"(?P<url>https?://[^\s]+)", self.body)
         if match:
             url = match.group("url")
             ip_regex = r'(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}'
+            
+            # check for extensons in url
             if any(ext in url for ext in [".exe", ".zip", ".rar"]):
                 self.riskScore += 1
+            # check whether using https or not
             if "http://" in url:
                 self.riskScore += 1
+            # check for IP address in URL
             if re.search(ip_regex, url):
                 self.riskScore += 1
 
