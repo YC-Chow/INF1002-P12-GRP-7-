@@ -137,6 +137,7 @@ class Email:
                 self.riskScore += 1
 
     def to_dict(self):
+        # to show on the FRONTEND side
         keyword_score = 0
         for kw, loc, pos in self.detected_keywords:
             keyword_score += 3 if loc == "subject" else (2 if pos < 100 else 1)
@@ -148,6 +149,7 @@ class Email:
             "riskScore": self.riskScore,
             "is_whitelisted": self.is_whitelisted,
             "keywords": list(set([kw for kw, _, _ in self.detected_keywords])),
+
             "risk_breakdown": {
                 "Whitelist": 10 if (self.is_whitelisted is False and not self.edit_distance_flag) else 0,
                 "Edit Distance": 10 if self.edit_distance_flag else 0,

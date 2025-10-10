@@ -37,6 +37,12 @@ def analyze_email():
     email = Email(data.get("sender", ""), data.get("subject", ""), data.get("body", ""))
     email.WhiteList_Check()
     email.Edit_Distance_Check()
-    email.Keyword_Position_Scoring()
-    email.Sus_Url_Detection()
+
+    email.Keyword_Detection()
+
+    if email.riskScore <10:
+        email.Keyword_Position_Scoring()
+        email.Sus_Url_Detection()
+
+    email.riskScore = min(email.riskScore, 10)
     return jsonify(email.to_dict())
