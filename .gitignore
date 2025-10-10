@@ -54,3 +54,5 @@ Thumbs.db # Windows
 # Logs
 logs/
 *.log
+frontend/package-lock.json
+frontend/package.json
