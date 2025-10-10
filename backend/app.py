@@ -192,7 +192,7 @@ class Email:
     def Sus_Url_Detection(self):
         if self.body == None or self.body == "":
             print("No body")
-            self.riskScore += 1
+            self.riskScore += 5
         else:
             # check for url shorteners
             if "bit.ly" in self.body or "tinyurl.com" in self.body or "ow.ly" in self.body:
