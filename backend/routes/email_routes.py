@@ -26,7 +26,7 @@ def distance():
 @email_bp.route("/url")
 def url():
     emailList = DatasetExtraction(5)
-    emailList.append(Email("", "Test Subject", "Please click http://192.168.0.1 to verify bit.ly/abc.zip"))
+    emailList.append(Email("", "Test Subject", "Please click http://192.168.0.1 http://facebook.com to verify bit.ly/abc.zip"))
     for email in emailList:
         email.Sus_Url_Detection()
     return jsonify([email.to_dict() for email in emailList])
