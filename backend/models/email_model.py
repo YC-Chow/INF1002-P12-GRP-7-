@@ -56,14 +56,28 @@ class Email:
         return f"[UNKNOWN] {domain} not similar to known domains"
 
     def Keyword_Detection(self):
+        # Initialize an empty list to store found keywords with their locations and positions
         found_keywords = []
+
+        # Clean subject and body first
+        # Replace multiple whitespace (space, tab, newline) with a single space
+        #clean_text() function imported from text_utils.py
         subject_lower = clean_text(self.subject.lower()) if self.subject else ""
         body_lower = clean_text(self.body.lower()) if self.body else ""
 
         for keyword in SUSPICIOUS_KEYWORDS:
+            # Use regex for full word matching
+            # Regex pattern ensures keyword appears as a separate word
+            # \b means a word boundary (space, punctuation, or start/end of string)
+            # re.escape() ensures any special characters in keyword are treated literally
+            # Example: "click" → keyword: click works. But "cli\nck" won't match.
             pattern = r"\b" + re.escape(keyword) + r"\b"
+
+            # Subject search
             for match in re.finditer(pattern, subject_lower):
                 found_keywords.append((keyword, "subject", match.start()))
+
+            # Body search
             for match in re.finditer(pattern, body_lower):
                 found_keywords.append((keyword, "body", match.start()))
 
@@ -71,16 +85,28 @@ class Email:
         return found_keywords
 
     def Keyword_Position_Scoring(self):
+        """ 
+        Assigns risk score based on keyword positions. 
+        - +3 if keyword in subject 
+        - +2 if keyword in first 100 chars of body 
+        - +1 if keyword elsewhere in body 
+        """
+        # Call the Keyword_Detection() method to get all detected keywords.
+        # It returns a list of tuples in the form (keyword, location, position),
+        # where 'location' can be "subject" or "body", and 'position' is the index of the keyword.
         found_keywords = self.Keyword_Detection()
+
+        #Loop through the found keywords and adjust riskScore based on their location and position.
         for keyword, location, pos in found_keywords:
             if location == "subject":
                 self.riskScore += 3
             elif location == "body":
                 self.riskScore += 2 if pos < 100 else 1
+        #print("Current Risk Score: ", self.riskScore)
         return self.riskScore
 
     def Sus_Url_Detection(self):
-        if not self.body:
+        if self.body == None or self.body == "":
             self.riskScore += 5
             return
 
