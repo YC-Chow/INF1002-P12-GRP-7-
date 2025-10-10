@@ -34,20 +34,26 @@ class Email:
             # split the @ and get the domain
             return email.split('@')[-1].strip().lower()
 
+        # extract the sender domain
         domain = extract_domain(self.sender)
 
         for legit in legit_domains:
             real = legit.strip().lower()
+            # calculate how many characters edits are needed to change "domain" to "real"
             distance = lev.distance(domain, real)
+            # converts the distance into ratio to account the domain length differences
+            similarity_ratio = distance / max(len(domain), len(real))
             
             # Exact or subdomain match
             if domain == real or domain.endswith("." + real):
                 print(f"[SAFE] Exact domain match : {domain} == {real}")
                 return f"[SAFE] {domain} == {real}"
             
-            # Suspicious (distance 1-3)
-            elif 1 <= distance <= 3:
+            # Suspicious (distance 0-1)
+            # domains that are <=20% different are considered suspicious 
+            elif 0 <= similarity_ratio <= 0.2:
                 self.riskScore = 10
+                # this flag is for the frontend part
                 self.edit_distance_flag = True
                 print(f"[SUSPICIOUS] {domain} is similar to {real} (distance = {distance}). Risk set to 10" )
                 return f"[SUSPICIOUS] {domain} looks similar to {real}"
