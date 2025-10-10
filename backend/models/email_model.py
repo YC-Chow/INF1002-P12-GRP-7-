@@ -18,20 +18,24 @@ class Email:
 
 
     def WhiteList_Check(self):
-        # Load the whitelist CSV file into pandas data frame
-        df = pd.read_csv(WHITELIST)  
+        df = pd.read_csv(WHITELIST)  #loads the whitelist csv into a dataframe
         
         def extract_domain(sender):     #extracts domain from email address
             match = re.search(r'<([^<>]+)>', sender)  #looks for pattern inside <>, easier than manually editing all the data in the csv
-            email = match.group(1) if match else sender  #if no match, use the raw sender string
-            return email.split('@')[-1].strip().lower()  #extract and return the domain part of the email address
+            #example of email format in dataset: Young Esposito <Young@iworld.de>
+
+            email = match.group(1) if match else sender  #if match, it will retrieve what is inside <>, else it returns None and keep the original string
+            return email.split('@')[-1].strip().lower()  #extract and return the domain part of the email address 
+            #does this by splitting the email string at '@' and taking the last part, which is the domain
         
         sender_domain = extract_domain(self.sender) #extract domain from sender
         sender_domain = sender_domain.lower()   #lowercase for case insensitive comparison
-        df['domain'] = df['sender'].apply(extract_domain).str.lower()  #creates new column in dataframe 'domain' by applying domain extraction to each sender in the whitelist, lowercase for case insensitive comparison
+        df['domain'] = df['sender'].apply(extract_domain).str.lower()  
+        #creates new column in whitelist dataframe labelled 'domain' by applying domain extraction to sender column in whitelist, 
+        #lowercase for case insensitive comparison
 
-        if sender_domain in df['domain'].values:        #check if the extracted sender domain is in the whitelist
-            self.is_whitelisted = True  #indicate as whitelisted
+        if sender_domain in df['domain'].values:        #check if the extracted sender domain is in the domain column of the whitelist
+            self.is_whitelisted = True     #indicate as whitelisted
             print(f"Sender's domain {sender_domain} is whitelisted.")   #for checking purposes
         else:
             self.is_whitelisted = False  #indicate as not whitelisted
