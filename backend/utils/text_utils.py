@@ -6,6 +6,11 @@ SUSPICIOUS_KEYWORDS = [
     "suspended", "unusual activity"
 ]
 
+SHORTENERS = ["bit.ly", "tinyurl.com", "ow.ly"]
+
+EXTENSIONS = [".exe", ".zip", ".rar"]
+
+
 def clean_text(text):
     # Replace multiple whitespace (space, tab, newline) with a single space
     return re.sub(r"\s+", " ", text).strip()
