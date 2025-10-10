@@ -29,7 +29,7 @@ class Email:
         def extract_domain(sender):
             # looks for a pattern inside the <> regex
             match = re.search(r'<([^<>]+@[^<>]+)>', sender)
-            #
+            # if match, it will retrieve what is inside <>, else it returns None and keep the original string
             email = match.group(1) if match else sender
             # split the @ and get the domain
             return email.split('@')[-1].strip().lower()
