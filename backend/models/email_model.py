@@ -16,15 +16,30 @@ class Email:
         self.edit_distance_flag = False
         self.urlRisk = 0
 
+
     def WhiteList_Check(self):
-        df = pd.read_csv(WHITELIST)     # load the whitelist CSV file into pandas data frame
-        sender_clean = self.sender.strip().lower()  # clean the sender email, removes leading and trailing spaces, converts to lowercase
-        if sender_clean in df['sender'].str.strip().str.lower().values:     # check if the cleaned sender email is in the whitelist DataFrame
-            self.is_whitelisted = True  # mark as whitelisted
+        # Load the whitelist CSV file into pandas data frame
+        df = pd.read_csv(WHITELIST)  
+        
+        def extract_domain(sender):     #extracts domain from email address
+            match = re.search(r'<([^<>]+)>', sender)  #looks for pattern inside <>, easier than manually editing all the data in the csv
+            email = match.group(1) if match else sender  #if no match, use the raw sender string
+            return email.split('@')[-1].strip().lower()  #extract and return the domain part of the email address
+        
+        sender_domain = extract_domain(self.sender) #extract domain from sender
+        sender_domain = sender_domain.lower()   #lowercase for case insensitive comparison
+        df['domain'] = df['sender'].apply(extract_domain).str.lower()  #creates new column in dataframe 'domain' by applying domain extraction to each sender in the whitelist, lowercase for case insensitive comparison
+
+        if sender_domain in df['domain'].values:        #check if the extracted sender domain is in the whitelist
+            self.is_whitelisted = True  #indicate as whitelisted
+            print(f"Sender's domain {sender_domain} is whitelisted.")   #for checking purposes
         else:
-            self.is_whitelisted = False  # not whitelisted
-            self.riskScore = 10 # assign maximum risk score since sender is not whitelisted
+            self.is_whitelisted = False  #indicate as not whitelisted
+            self.riskScore = 10  #assign max risk score since not whitelisted
+            print(f"Sender's domain {sender_domain} is NOT whitelisted.")   #for checking purposes
+            
         return self.is_whitelisted
+
 
     def Edit_Distance_Check(self):
         def extract_domain(sender):
