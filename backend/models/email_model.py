@@ -17,13 +17,13 @@ class Email:
         self.urlRisk = 0
 
     def WhiteList_Check(self):
-        df = pd.read_csv(WHITELIST)
-        sender_clean = self.sender.strip().lower()
-        if sender_clean in df['sender'].str.strip().str.lower().values:
-            self.is_whitelisted = True
+        df = pd.read_csv(WHITELIST)     # load the whitelist CSV file into pandas data frame
+        sender_clean = self.sender.strip().lower()  # clean the sender email, removes leading and trailing spaces, converts to lowercase
+        if sender_clean in df['sender'].str.strip().str.lower().values:     # check if the cleaned sender email is in the whitelist DataFrame
+            self.is_whitelisted = True  # mark as whitelisted
         else:
-            self.is_whitelisted = False
-            self.riskScore = 10
+            self.is_whitelisted = False  # not whitelisted
+            self.riskScore = 10 # assign maximum risk score since sender is not whitelisted
         return self.is_whitelisted
 
     def Edit_Distance_Check(self):
